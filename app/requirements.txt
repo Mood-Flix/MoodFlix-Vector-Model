@@ -1,0 +1,5 @@
+fastapi
+uvicorn[standard]
+transformers>=4.30.0
+torch           # CPU 버전; GPU를 쓸 경우 적절한 torch wheel로 교체
+# 추가 필요시: tokenizers, sentencepiece
