@@ -20,5 +20,5 @@ RUN pip install --no-cache-dir --retries 5 --timeout 120 -r requirements.txt
 # 앱 복사
 COPY app/ /app/app/
 
-EXPOSE 8081
+EXPOSE 8001
 CMD ["uvicorn","app.main:app","--host","0.0.0.0","--port","8001","--timeout-keep-alive","75"]
