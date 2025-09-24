@@ -1,27 +1,45 @@
-# app/model.py
 from transformers import pipeline
-import torch
-import logging
+import math
+import threading
 
-logging.basicConfig(level=logging.INFO)
-logger = logging.getLogger(__name__)
+# 파이프라인은 lazy-load + 싱글톤
+_pipe = None
+_lock = threading.Lock()
 
-DEVICE = 0 if torch.cuda.is_available() else -1
+def get_pipe():
+    global _pipe
+    if _pipe is None:
+        with _lock:
+            if _pipe is None:
+                _pipe = pipeline(
+                    "text-classification",
+                    model="searle-j/kote_for_easygoing_people",
+                    tokenizer="searle-j/kote_for_easygoing_people",
+                    return_all_scores=True,
+                    device=-1,  # GPU면 0
+                )
+    return _pipe
 
-logger.info("Loading pipeline...")
-# return_all_scores=True or top_k=None: 모든 라벨 점수 반환
-pipe = pipeline(
-    "text-classification",
-    model="searle-j/kote_for_easygoing_people",
-    tokenizer="searle-j/kote_for_easygoing_people",
-    return_all_scores=True,
-    device=DEVICE
-)
-logger.info("Pipeline loaded.")
+def _label_order():
+    p = get_pipe()
+    id2 = getattr(p.model.config, "id2label", None)
+    if id2:
+        return [id2[i] for i in sorted(id2.keys())]
+    return [x["label"] for x in p("warmup")[0]]
 
-# helper: 입력 문장 -> (top_label, scores_list)
-def predict_emotion(text: str):
-    raw = pipe(text)[0]  # list of {"label":..., "score":...}
-    # raw는 pipeline이 준 그대로(소수점 아주 많은 값)
-    # 필요하면 rounding/정규화는 호출자(main.py)에서 처리
-    return raw
+LABELS = _label_order()
+
+def _l2(v):
+    s = sum(x*x for x in v)
+    return [x/(s**0.5) for x in v] if s > 0 else v
+
+def vectorize_text(text: str):
+    p = get_pipe()
+    raw = p(text)[0]  # [{"label","score"}, ...]
+    m = {d["label"]: float(d["score"]) for d in raw}
+    vec = [m.get(lbl, 0.0) for lbl in LABELS]
+    return _l2(vec)
+
+def model_version() -> str:
+    p = get_pipe()
+    return str(getattr(p.model.config, "name_or_path", "unknown"))
