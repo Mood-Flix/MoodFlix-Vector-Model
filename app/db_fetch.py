@@ -15,8 +15,8 @@ def fetch_movies_for_embedding(engine: Engine, offset: int, limit: int):
           ) AS keywords_text,
           COALESCE(
             TRIM(CONCAT_WS(' ',
-              GROUP_CONCAT(r.content  ORDER BY r.created_at  SEPARATOR ' '),
-              GROUP_CONCAT(tr.content ORDER BY tr.created_at SEPARATOR ' ')
+              GROUP_CONCAT(DISTINCT r.content  ORDER BY r.created_at  SEPARATOR ' '),
+              GROUP_CONCAT(DISTINCT tr.content ORDER BY tr.created_at SEPARATOR ' ')
             )),
             ''
           ) AS reviews_text
