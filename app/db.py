@@ -35,13 +35,13 @@ def get_engine() -> Engine:
             host=host,
             port=int(port) if port else None,
             database=db,
-            query=query,
+            query=params or {},
         )
 
-    connect_args = {}
-        ssl_mode = str(params.get("ssl-mode", "")).upper() if params else ""
-        if ssl_mode == "REQUIRED":
-            ca_path = os.getenv("DB_SSL_CA")  # 선택
+    connect_args = {"connect_timeout": 10}
+    ssl_mode = str(params.get("ssl-mode", "")).upper() if params else ""
+    if ssl_mode == "REQUIRED":
+        ca_path = os.getenv("DB_SSL_CA")  # 선택
             if ca_path:
                 connect_args = {"ssl": {"ca": ca_path}}
             else:
