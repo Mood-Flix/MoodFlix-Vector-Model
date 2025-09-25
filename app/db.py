@@ -58,4 +58,5 @@ def get_engine() -> Engine:
         max_overflow=10,
         connect_args=connect_args,
     )
+    return engine
 
