@@ -38,20 +38,20 @@ def get_engine() -> Engine:
             query=params or {},
         )
 
-    connect_args = {"connect_timeout": 10}
-    ssl_mode = str(params.get("ssl-mode", "")).upper() if params else ""
-    if ssl_mode == "REQUIRED":
-        ca_path = os.getenv("DB_SSL_CA")  # 선택
-            if ca_path:
-                connect_args = {"ssl": {"ca": ca_path}}
-            else:
-                # 최소한의 SSL 활성화 (PyMySQL는 빈 dict도 SSL 사용으로 간주)
-                connect_args = {"ssl": {}}
+    connect_args = {"connect_timeout": int(os.getenv("DB_CONNECT_TIMEOUT", "10"))}
 
-      engine = create_engine(
+        ssl_mode = str(params.get("ssl-mode", "")).upper() if params else ""
+        if ssl_mode in ("REQUIRED", "VERIFY_CA", "VERIFY_IDENTITY"):
+            ca_path = os.getenv("DB_SSL_CA")  # PEM 파일 경로(옵션)
+            if ca_path:
+                connect_args["ssl"] = {"ca": ca_path}   # 인증서 검증
+            else:
+                connect_args["ssl"] = {}                # 암호화만(임시) — 문서로 고지 권장
+
+        engine = create_engine(
             sa_url,
-            pool_pre_ping=True,   # 죽은 커넥션 자동 감지
-            pool_recycle=1800,    # 30분마다 재연결 (Cloud SQL/Aiven 등 idle timeout 대응)
+            pool_pre_ping=True,
+            pool_recycle=1800,
             pool_size=5,
             max_overflow=10,
             connect_args=connect_args,
