@@ -1,8 +1,7 @@
 # app/db.py
 import os, re
-from urllib.parse import quote_plus
 from sqlalchemy import create_engine
-from sqlalchemy.engine import Engine
+from sqlalchemy.engine import Engine, URL
 
 def parse_jdbc_mysql_url(jdbc_url: str):
     m = re.match(r"jdbc:mysql://([^/:]+)(?::(\d+))?/([^?]+)\??(.*)?", jdbc_url)
