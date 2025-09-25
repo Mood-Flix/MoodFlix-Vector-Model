@@ -50,7 +50,7 @@ def vectorize_text(text: str) -> List[float]:
     """입력 문장을 43차 감정 벡터(L2 정규화)로 변환."""
     p = get_pipe()
     labels = ensure_labels()
-    raw = p(text)[0]  # [{ "label": ..., "score": ...}, ...]
+    raw = p(text, truncation=True, max_length=512)[0]
     label2score = {d["label"]: float(d["score"]) for d in raw}
     vec = [label2score.get(lbl, 0.0) for lbl in labels]
     return _l2(vec)
